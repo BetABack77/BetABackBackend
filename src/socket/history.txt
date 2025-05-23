@@ -1,0 +1,26 @@
+let currentRound = {
+  id: Date.now().toString(),
+  bets: [],
+  totals: { up: 0, down: 0 },
+  startTime: Date.now(),
+  endTime: Date.now() + 60000,
+  history: [],
+};
+ 
+ 
+ // Add to history before resetting round
+      currentRound.history.unshift({
+        result: winningSide,
+        time: new Date(),
+        upTotal: currentRound.totals.up,
+        downTotal: currentRound.totals.down,
+        roundId: currentRound.id,
+      });
+
+      // Limit history size
+      if (currentRound.history.length > maxHistoryLength) {
+        currentRound.history.pop();
+      }
+
+      // Broadcast history update
+      io.emit("history-update", currentRound.history);
