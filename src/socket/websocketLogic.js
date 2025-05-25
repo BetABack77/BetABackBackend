@@ -232,8 +232,6 @@ export default function handleWebSocket(io) {
       roundHistory: roundHistory,
     });
 
-    
-
     socket.on("placeBet", async ({ userId, choice, amount, roundId }) => {
       try {
         if (roundId !== currentRound.roundId) {
