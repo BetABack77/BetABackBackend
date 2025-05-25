@@ -4,6 +4,71 @@ import { WithdrawHistory } from "../model/withdraw.model.js";
 
 import { User } from "../model/User.model.js";
 import { BankDetail } from "../model/bank_detail.model.js";
+// export const verifyDeposit = async (req, res) => {
+//   try {
+//     const { userId, depositId } = req.body;
+
+//     // Step 1: Find the deposit
+//     const deposit = await Deposit.findOne({ _id: depositId, user: userId });
+//     if (!deposit) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Deposit not found",
+//       });
+//     }
+
+//     if (deposit.status === "APPROVED") {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Deposit already verified",
+//       });
+//     }
+
+//     // Step 2: Update deposit status
+//     deposit.status = "APPROVED";
+//     await deposit.save();
+
+//     // Step 3: Update user's balance
+//     const user = await User.findById(userId);
+//     if (!user) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "User not found",
+//       });
+//     }
+//     console.log("user", user);
+
+//     // Calculate 5% bonus
+//     const bonusAmount = deposit.amount * 0.05;
+//     console.log("bonusAmount", bonusAmount);
+
+//     user.balance += deposit.amount + bonusAmount;
+
+//     user.bonusAmount += deposit.amount + bonusAmount;
+//     await user.save();
+
+//     const referredByUser = await User.findOne({
+//       referralCode: user.referredBy,
+//     });
+
+//     console.log("refferedByUser", referredByUser);
+//     if (referredByUser) {
+//       // referedbyuser will get 5% of deposit
+//       referredByUser.balance += deposit.amount * 0.05;
+//       referredByUser.bonusAmount += deposit.amount * 0.05;
+//       await referredByUser.save();
+//     }
+
+//     res.status(200).json({
+//       success: true,
+//       message: "Deposit verified and balance updated",
+//     });
+//   } catch (error) {
+//     console.error("Error verifying deposit:", error);
+//     res.status(500).json({ success: false, message: "Internal server error" });
+//   }
+// };
+
 export const verifyDeposit = async (req, res) => {
   try {
     const { userId, depositId } = req.body;
@@ -36,32 +101,46 @@ export const verifyDeposit = async (req, res) => {
         message: "User not found",
       });
     }
-    console.log("user", user);
 
-    // Calculate 5% bonus
-    const bonusAmount = deposit.amount * 0.05;
-    console.log("bonusAmount", bonusAmount);
+    // Step 4: Calculate 5% bonus
+    const fivePercentBonus = deposit.amount * 0.05;
+    user.balance += deposit.amount + fivePercentBonus;
+    user.bonusAmount += fivePercentBonus;
 
-    user.balance += deposit.amount + bonusAmount;
-
-    user.bonusAmount += deposit.amount + bonusAmount;
-    await user.save();
-
-    const referredByUser = await User.findOne({
-      referralCode: user.referredBy,
+    // Step 5: Check if this is the user's FIRST approved deposit
+    const approvedDeposits = await Deposit.find({
+      user: userId,
+      status: "APPROVED",
     });
 
-    console.log("refferedByUser", referredByUser);
-    if (referredByUser) {
-      // referedbyuser will get 5% of deposit
-      referredByUser.balance += deposit.amount * 0.05;
-      referredByUser.bonusAmount += deposit.amount * 0.05;
-      await referredByUser.save();
+    const isFirstDeposit = approvedDeposits.length === 1; // Because we just approved it above
+
+    // Step 6: Referral Bonus (₹50 each) if it's the first deposit
+    let referredByUser = null;
+    if (isFirstDeposit && user.referredBy) {
+      referredByUser = await User.findOne({
+        referralCode: user.referredBy,
+      });
+
+      if (referredByUser) {
+        // Give ₹50 to the referred user (new user)
+        user.balance += 50;
+        user.bonusAmount += 50;
+
+        // Give ₹50 to the referrer
+        referredByUser.balance += 50;
+        referredByUser.bonusAmount += 50;
+
+        await referredByUser.save();
+      }
     }
+
+    await user.save();
 
     res.status(200).json({
       success: true,
       message: "Deposit verified and balance updated",
+      referralBonusGiven: isFirstDeposit && referredByUser ? true : false,
     });
   } catch (error) {
     console.error("Error verifying deposit:", error);

@@ -208,6 +208,9 @@ let currentRound = {
   totals: { head: 0, tail: 0 }, // track total bet amounts
 };
 
+const roundHistory = []; // Will store last 8 rounds
+const MAX_HISTORY = 8; // How many rounds to keep
+
 let RoomName = "";
 
 export default function handleWebSocket(io) {
@@ -226,57 +229,10 @@ export default function handleWebSocket(io) {
     socket.emit("currentRound", {
       roundId: currentRound.roundId,
       startedAt: currentRound.createdAt,
+      roundHistory: roundHistory,
     });
 
-    // socket.on("placeBet", async ({ userId, choice, amount, roundId }) => {
-    //   try {
-    //     if (roundId !== currentRound.roundId) {
-    //       socket.emit("error", "This round has already ended");
-    //       return;
-    //     }
-    //     socket.join(userId.toString());
-
-    //     const user = await User.findById(userId);
-    //     if (!user) {
-    //       socket.emit("error", "User not found");
-    //       return;
-    //     }
-
-    //     if (user.balance < amount) {
-    //       socket.emit("error", "Insufficient balance");
-    //       return;
-    //     }
-
-    //     // user.balance -= amount;
-
-    //     user.balance -= amount; // Always deduct full amount from balance
-
-    //     if (user.bonusAmount > 0) {
-    //       if (user.bonusAmount >= amount) {
-    //         // Case 1: Bonus is more than or equal to amount
-    //         user.bonusAmount -= amount;
-    //         user.bonusPlayedAmount += amount;
-    //       } else {
-    //         // Case 2: Bonus is less than amount
-    //         user.bonusPlayedAmount += user.bonusAmount;
-    //         user.bonusAmount = 0;
-    //       }
-    //     }
-
-    //     await user.save();
-
-    //     // Update round info
-    //     currentRound.players.push({ userId, choice, amount });
-    //     // Add to total amount per choice
-    //     currentRound.totals[choice] += amount;
-
-    //     socket.emit("betPlaced", { amount, choice });
-    //     socket.emit("balanceUpdate", { balance: user.balance });
-    //   } catch (error) {
-    //     console.error("Error placing bet:", error);
-    //     socket.emit("error", "Failed to place bet");
-    //   }
-    // });
+    
 
     socket.on("placeBet", async ({ userId, choice, amount, roundId }) => {
       try {
@@ -414,6 +370,18 @@ export default function handleWebSocket(io) {
     // 4. Execute all updates in bulk
     if (bulkUpdates.length > 0) {
       await UserBetHistory.bulkWrite(bulkUpdates);
+    }
+
+    // Store completed round in history
+    const completedRound = {
+      roundId: currentRound.roundId,
+      result,
+    };
+
+    // Add to history and enforce max size
+    roundHistory.unshift(completedRound); // Add to beginning
+    if (roundHistory.length > MAX_HISTORY) {
+      roundHistory.pop(); // Remove oldest if over limit
     }
 
     const winners = currentRound.players.filter((p) => p.choice === result);

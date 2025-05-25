@@ -259,10 +259,10 @@ export const Signup = async (req, res) => {
         });
       }
 
-      if (referrer.referralCode === referralCode) {
-        bonusAmount = 50; // Bonus for the new user
-        walletAmount = 50; // Wallet amount for the new user
-      }
+      // if (referrer.referralCode === referralCode) {
+      //   bonusAmount = 50; // Bonus for the new user
+      //   walletAmount = 50; // Wallet amount for the new user
+      // }
 
       referredBy = referralCode;
 
