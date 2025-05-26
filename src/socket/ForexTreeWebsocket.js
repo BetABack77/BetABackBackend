@@ -237,7 +237,6 @@ class GameRound {
   }
 }
 
-
 const getTimeRemaining = (round) => {
   const now = new Date();
   const elapsed = now - round.createdAt;
@@ -274,11 +273,11 @@ export default function setupTradingWebSocket(io) {
     // });
 
     io.emit("newRound", {
-    roundId: currentRound.roundId,
-    startedAt: currentRound.createdAt,
-    serverTime: Date.now(), // Add this
-    history: roundHistory.slice(-5),
-  });
+      roundId: currentRound.roundId,
+      startedAt: currentRound.createdAt,
+      serverTime: Date.now(), // Add this
+      history: roundHistory.slice(-5),
+    });
 
     // Schedule next round end
     if (timerInterval) clearInterval(timerInterval);
@@ -380,11 +379,12 @@ export default function setupTradingWebSocket(io) {
     console.log("New client connected:", socket.id);
 
     // Register user and join room
-    socket.on("registerUser", (userId) => {
-      if (!userId) return;
+    socket.on("registerUser", (roomName) => {
+      // if (!userId) return;
+      console.log("User registered:", roomName);
 
-      socket.join(userId.toString());
-      socket.join("updownGame");
+      // socket.join(userId.toString());
+      socket.join(roomName);
 
       // Send current game state to newly connected user
       // socket.emit("gameState", {
@@ -399,22 +399,21 @@ export default function setupTradingWebSocket(io) {
       //   history: roundHistory.slice(-5),
       // });
 
-      
-// Modify the gameState emission to include precise timing
-socket.emit("gameState", {
-  currentRound: {
-    roundId: currentRound.roundId,
-    startedAt: currentRound.createdAt,
-    timeLeft: getTimeRemaining(currentRound), // Add this
-    serverTime: Date.now() // Add server timestamp
-  },
-  history: roundHistory.slice(-5),
-});
-
+      // Modify the gameState emission to include precise timing
+      socket.emit("gameState", {
+        currentRound: {
+          roundId: currentRound.roundId,
+          startedAt: currentRound.createdAt,
+          timeLeft: getTimeRemaining(currentRound), // Add this
+          serverTime: Date.now(), // Add server timestamp
+        },
+        history: roundHistory.slice(-5),
+      });
     });
 
     // Handle bet placement
-    socket.on("placeBet", async ({ userId, choice, amount }) => {
+    socket.on("placeBetForex", async ({ userId, choice, amount }) => {
+      console.log("hello we are in forex tree place bet");
       try {
         // Validate
         if (currentRound.endedAt) {
@@ -434,7 +433,7 @@ socket.emit("gameState", {
         const betRecord = new UserBetHistory({
           gameType: "ForexTree",
           userId,
-          roundId:currentRound.roundId,
+          roundId: currentRound.roundId,
           choice,
           amount,
           // betAmount: amount,

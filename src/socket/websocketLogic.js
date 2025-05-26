@@ -237,6 +237,7 @@ export default function handleWebSocket(io) {
     });
 
     socket.on("placeBet", async ({ userId, choice, amount, roundId }) => {
+      console.log("we are in websocket logic placeBet");
       try {
         if (roundId !== currentRound.roundId) {
           return socket.emit("error", "This round has already ended");
