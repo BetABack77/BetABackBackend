@@ -251,23 +251,18 @@ export const Signup = async (req, res) => {
 
     if (referralCode) {
       // const referrer = await User.findOne({ referralCode });
-
       // if (!referrer) {
       //   return res.status(400).json({
       //     success: false,
       //     message: "Invalid referral code",
       //   });
       // }
-
       // if(referrer){
-
       // if (referrer.referralCode === referralCode) {
       //   bonusAmount = 50; // Bonus for the new user
       //   walletAmount = 50; // Wallet amount for the new user
       // }
-
       // referredBy = referralCode;
-
       // Reward referrer
       // referrer.balance = (referrer.balance || 0) + 300;
       // referrer.bonusAmount = (referrer.bonusAmount || 0) + 300;

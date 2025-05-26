@@ -237,6 +237,13 @@ class GameRound {
   }
 }
 
+
+const getTimeRemaining = (round) => {
+  const now = new Date();
+  const elapsed = now - round.createdAt;
+  return Math.max(0, ROUND_DURATION - elapsed);
+};
+
 export default function setupTradingWebSocket(io) {
   let currentRound = new GameRound();
   const roundHistory = [];
@@ -260,11 +267,18 @@ export default function setupTradingWebSocket(io) {
 
     // Start new round
     currentRound = new GameRound();
+    // io.emit("newRound", {
+    //   roundId: currentRound.roundId,
+    //   startedAt: currentRound.createdAt,
+    //   history: roundHistory.slice(-5), // Send last 5 rounds for display
+    // });
+
     io.emit("newRound", {
-      roundId: currentRound.roundId,
-      startedAt: currentRound.createdAt,
-      history: roundHistory.slice(-5), // Send last 5 rounds for display
-    });
+    roundId: currentRound.roundId,
+    startedAt: currentRound.createdAt,
+    serverTime: Date.now(), // Add this
+    history: roundHistory.slice(-5),
+  });
 
     // Schedule next round end
     if (timerInterval) clearInterval(timerInterval);
@@ -373,17 +387,30 @@ export default function setupTradingWebSocket(io) {
       socket.join("updownGame");
 
       // Send current game state to newly connected user
-      socket.emit("gameState", {
-        currentRound: {
-          roundId: currentRound.roundId,
-          startedAt: currentRound.createdAt,
-          timeLeft: Math.max(
-            0,
-            ROUND_DURATION - (Date.now() - currentRound.createdAt.getTime())
-          ),
-        },
-        history: roundHistory.slice(-5),
-      });
+      // socket.emit("gameState", {
+      //   currentRound: {
+      //     roundId: currentRound.roundId,
+      //     startedAt: currentRound.createdAt,
+      //     timeLeft: Math.max(
+      //       0,
+      //       ROUND_DURATION - (Date.now() - currentRound.createdAt.getTime())
+      //     ),
+      //   },
+      //   history: roundHistory.slice(-5),
+      // });
+
+      
+// Modify the gameState emission to include precise timing
+socket.emit("gameState", {
+  currentRound: {
+    roundId: currentRound.roundId,
+    startedAt: currentRound.createdAt,
+    timeLeft: getTimeRemaining(currentRound), // Add this
+    serverTime: Date.now() // Add server timestamp
+  },
+  history: roundHistory.slice(-5),
+});
+
     });
 
     // Handle bet placement

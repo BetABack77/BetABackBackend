@@ -18,25 +18,21 @@ import { generateOtpTemplate } from "../templets/sentOtpTemplets.js";
 //   { timestamps: true, expiresIn: "5m" }
 // );
 
-
-
-const otpSchema = new Schema(
-  {
-    email: {
-      type: String,
-      required: true,
-    },
-    otp: {
-      type: String,
-      required: true,
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now,
-      expires: 300, // 300 seconds = 5 minutes
-    },
-  }
-);
+const otpSchema = new Schema({
+  email: {
+    type: String,
+    required: true,
+  },
+  otp: {
+    type: String,
+    required: true,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+    expires: 300, // 300 seconds = 5 minutes
+  },
+});
 
 otpSchema.pre("save", async function genrateOtp() {
   const usename = this.email.split("@")[0];

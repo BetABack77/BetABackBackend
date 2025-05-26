@@ -226,6 +226,10 @@ export default function handleWebSocket(io) {
       io.to(roomName).emit("userRegistered", roomName);
     });
 
+    socket.on("getServerTime", (data, callback) => {
+      callback(Date.now());
+    });
+
     socket.emit("currentRound", {
       roundId: currentRound.roundId,
       startedAt: currentRound.createdAt,
