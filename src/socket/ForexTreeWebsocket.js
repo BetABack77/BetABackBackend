@@ -1,223 +1,4 @@
-// import { User } from "../model/User.model.js";
-// import mongoose from "mongoose";
 
-// let RoomName = "";
-
-// let currentRound = {
-//   roundId: Date.now().toString(),
-//   players: [],
-//   createdAt: new Date(),
-//   totals: { up: 0, down: 0 },
-//   result: null,
-//   endedAt: null,
-// };
-
-// export default function setupTradingWebSocket(io) {
-//   io.on("connection", (socket) => {
-//     console.log("New client connected:", socket.id);
-
-//     // Track connected socket
-//     socket.on("registerUser", (roomName) => {
-//       RoomName = roomName;
-//       console.log("User registered:", roomName);
-//       socket.join(roomName); // join room even if user didn't bet
-
-//       io.to(roomName).emit("userRegistered", roomName);
-//     });
-
-//     // Handle bet placement
-//     socket.on("placeBet", async ({ userId, choice, amount, roundId }) => {
-//       try {
-//         if (roundId !== currentRound.roundId) {
-//           return socket.emit("error", "This round has already ended");
-//         }
-
-//         // Join user-specific room to send private messages
-//         socket.join(userId.toString());
-
-//         // Use lean for faster fetch (no Mongoose wrapper)
-//         const userDoc = await User.findById(userId)
-//           .select("balance bonusAmount bonusPlayedAmount")
-//           .lean();
-
-//         if (!userDoc) {
-//           return socket.emit("error", "User not found");
-//         }
-
-//         // Check balance before processing
-//         if (userDoc.balance < amount) {
-//           return socket.emit("error", "Insufficient balance");
-//         }
-
-//         // Prepare updated values (logic offloaded here)
-//         const newBalance = userDoc.balance - amount;
-//         let updatedBonusAmount = userDoc.bonusAmount;
-//         let updatedBonusPlayed = userDoc.bonusPlayedAmount;
-
-//         if (userDoc.bonusAmount > 0) {
-//           if (userDoc.bonusAmount >= amount) {
-//             updatedBonusAmount -= amount;
-//             updatedBonusPlayed += amount;
-//           } else {
-//             updatedBonusPlayed += updatedBonusAmount;
-//             updatedBonusAmount = 0;
-//           }
-//         }
-
-//         // Update only required fields (atomic update)
-//         await User.updateOne(
-//           { _id: userId },
-//           {
-//             $set: {
-//               balance: newBalance,
-//               bonusAmount: updatedBonusAmount,
-//               bonusPlayedAmount: updatedBonusPlayed,
-//             },
-//           }
-//         );
-
-//         // ✅ Store player info (in-memory only)
-//         currentRound.players.push({ userId, choice, amount });
-//         currentRound.totals[choice] += amount;
-
-//         // ✅ Respond immediately to frontend
-//         socket.emit("betPlaced", { amount, choice });
-//         socket.emit("balanceUpdate", { balance: newBalance });
-//       } catch (error) {
-//         console.error("Error placing bet:", error);
-//         socket.emit("error", "Something went wrong. Try again.");
-//       }
-//     });
-
-//     // Handle disconnection
-//     socket.on("disconnect", () => {
-//       console.log("Client disconnected:", socket.id);
-//     });
-//   });
-
-//   setInterval(async () => {
-//     // if (currentRound.players.length === 0) {
-//     //   // No bets - start a new round
-//     //   currentRound = {
-//     //     roundId: Date.now().toString(),
-//     //     players: [],
-//     //     createdAt: new Date(),
-//     //     totals: { up: 0, down: 0 },
-//     //   };
-//     //   io.emit("newRound", {
-//     //     roundId: currentRound.roundId,
-//     //     startedAt: currentRound.createdAt,
-//     //   });
-//     //   return;
-//     // }
-
-//     // Determine winning side: one with less total amount
-//     const { up, down } = currentRound.totals;
-//     let result = null;
-
-//     result = Math.random() < 0.5 ? "up" : "down"; // tie → random
-//     // result = "up";
-//     // if (up === down) {
-//     //   result = Math.random() < 0.5 ? "up" : "down"; // tie → random
-//     // } else {
-//     //   result = up < down ? "up" : "down";
-//     //   // result = "up";
-//     // }
-
-//     const winners = currentRound.players.filter((p) => p.choice === result);
-//     const updatePromises = winners.map(async (player) => {
-//       try {
-//         const user = await User.findById(player.userId);
-//         if (user) {
-//           const payout = player.amount * 1.95;
-//           user.balance += payout;
-//           await user.save();
-
-//           player.payout = payout;
-//         }
-//       } catch (error) {
-//         console.error(
-//           `Error processing payout for user ${player.userId}:`,
-//           error
-//         );
-//       }
-//     });
-
-//     await Promise.all(updatePromises);
-
-//     // Emit round result to all clients
-//     // io.emit("roundResult", {
-//     //   roundId: currentRound.roundId,
-//     //   result,
-//     //   players: currentRound.players,
-//     //   totals: currentRound.totals,
-//     // });
-
-//     // io.to(RoomName).emit("roundResultToAll", {
-//     //   roundId: currentRound.roundId,
-//     //   result,
-//     //   players: currentRound.players,
-//     //   totals: currentRound.totals,
-
-//     // });
-
-//     // console.log("RoomName", RoomName);
-
-//     // Send win notification AFTER all updates
-//     // winners.forEach((player) => {
-//     //   if (player.payout) {
-//     //     io.to(RoomName).emit("wonMessage", {
-//     //       message: `🎉 You won ₹${player.payout.toFixed(2)}!`,
-//     //       amount: player.payout,
-//     //     });
-//     //   }
-//     // });
-
-//     io.to(RoomName).emit("roundResultToAll", {
-//       room: RoomName, // Add this
-//       roundId: currentRound.roundId,
-//       result,
-//       players: currentRound.players,
-//       totals: currentRound.totals,
-//     });
-
-//     currentRound.players.forEach((player) => {
-//       const isWinner = player.choice === result;
-
-//       if (isWinner) {
-//         const winAmount = player.amount * 1.95;
-//         io.to(player.userId.toString()).emit("roundOutcome", {
-//           result: "win",
-//           choice: player.choice,
-//           winningSide: result,
-//           amount: winAmount,
-//           message: `🎉 You won ₹${winAmount.toFixed(2)}!`,
-//         });
-//       } else {
-//         io.to(player.userId.toString()).emit("roundOutcome", {
-//           result: "lose",
-//           choice: player.choice,
-//           winningSide: result,
-//           amount: 0,
-//           message: `😢 You lost this round!`,
-//         });
-//       }
-//     });
-
-//     // Start new round
-//     currentRound = {
-//       roundId: Date.now().toString(),
-//       players: [],
-//       createdAt: new Date(),
-//       totals: { up: 0, down: 0 },
-//     };
-
-//     io.emit("newRound", {
-//       roundId: currentRound.roundId,
-//       startedAt: currentRound.createdAt,
-//     });
-//   }, 30000); // every minute
-// }
 
 import { User } from "../model/User.model.js";
 import mongoose from "mongoose";
@@ -272,7 +53,7 @@ export default function setupTradingWebSocket(io) {
     //   history: roundHistory.slice(-5), // Send last 5 rounds for display
     // });
 
-    io.emit("newRound", {
+    io.emit("risefall_newRound", {
       roundId: currentRound.roundId,
       startedAt: currentRound.createdAt,
       serverTime: Date.now(), // Add this
@@ -348,7 +129,7 @@ export default function setupTradingWebSocket(io) {
     await Promise.all(updatePromises);
 
     // Emit results
-    io.emit("roundResult", {
+    io.emit("risefall_roundResult", {
       roundId: currentRound.roundId,
       result: currentRound.result,
       totals: currentRound.totals,
@@ -360,7 +141,7 @@ export default function setupTradingWebSocket(io) {
       const isWinner = player.choice === currentRound.result;
       const winAmount = isWinner ? player.amount * 1.95 : 0;
 
-      io.to(player.userId.toString()).emit("roundOutcome", {
+      io.to(player.userId.toString()).emit("risefall_roundOutcome", {
         result: isWinner ? "win" : "lose",
         choice: player.choice,
         winningSide: currentRound.result,
@@ -376,31 +157,17 @@ export default function setupTradingWebSocket(io) {
   };
 
   io.on("connection", (socket) => {
-    console.log("New client connected:", socket.id);
+    // console.log("New client connected:", socket.id);
 
     // Register user and join room
-    socket.on("registerUser", (roomName) => {
+    socket.on("risefall_registerUser", (roomName) => {
       // if (!userId) return;
-      console.log("User registered:", roomName);
+      // console.log("User registered:", roomName);
 
-      // socket.join(userId.toString());
       socket.join(roomName);
 
-      // Send current game state to newly connected user
-      // socket.emit("gameState", {
-      //   currentRound: {
-      //     roundId: currentRound.roundId,
-      //     startedAt: currentRound.createdAt,
-      //     timeLeft: Math.max(
-      //       0,
-      //       ROUND_DURATION - (Date.now() - currentRound.createdAt.getTime())
-      //     ),
-      //   },
-      //   history: roundHistory.slice(-5),
-      // });
-
       // Modify the gameState emission to include precise timing
-      socket.emit("gameState", {
+      socket.emit("risefall_gameState", {
         currentRound: {
           roundId: currentRound.roundId,
           startedAt: currentRound.createdAt,
@@ -413,22 +180,24 @@ export default function setupTradingWebSocket(io) {
 
     // Handle bet placement
     socket.on("placeBetForex", async ({ userId, choice, amount }) => {
-      console.log("hello we are in forex tree place bet");
+      // console.log("hello we are in forex tree place bet");
       try {
         // Validate
         if (currentRound.endedAt) {
-          return socket.emit("error", "Round has ended");
+          return socket.emit("risefall_error", "Round has ended");
         }
         if (!["up", "down"].includes(choice)) {
-          return socket.emit("error", "Invalid choice");
+          return socket.emit("risefall_error", "Invalid choice");
         }
         if (isNaN(amount) || amount < 1) {
-          return socket.emit("error", "Invalid amount");
+          return socket.emit("risefall_error", "Invalid amount");
         }
+
+        socket.join(userId.toString());
 
         // Check balance
         const user = await User.findById(userId);
-        if (!user) return socket.emit("error", "User not found");
+        if (!user) return socket.emit("risefall_error", "User not found");
 
         const betRecord = new UserBetHistory({
           gameType: "ForexTree",
@@ -441,7 +210,7 @@ export default function setupTradingWebSocket(io) {
         });
         await betRecord.save();
         if (user.balance < amount) {
-          return socket.emit("error", "Insufficient balance");
+          return socket.emit("risefall_error", "Insufficient balance");
         }
 
         // // Deduct balance
@@ -458,7 +227,7 @@ export default function setupTradingWebSocket(io) {
           .lean();
 
         if (!userDoc) {
-          return socket.emit("error", "User not found");
+          return socket.emit("risefall_error", "User not found");
         }
 
         // Prepare updated values (logic offloaded here)
@@ -493,17 +262,19 @@ export default function setupTradingWebSocket(io) {
         currentRound.totals[choice] += amount;
 
         // Notify user
-        socket.emit("betPlaced", { amount, choice });
-        socket.emit("balanceUpdate", { balance: user.balance - amount });
+        socket.emit("risefall_betPlaced", { amount, choice });
+        socket.emit("risefall_balanceUpdate", {
+          balance: user.balance - amount,
+        });
       } catch (error) {
-        console.log("error msg is ", error);
+        // console.log("error msg is ", error);
         console.error("Error placing bet:", error);
-        socket.emit("error", "Failed to place bet");
+        socket.emit("risefall_error", "Failed to place bet");
       }
     });
 
     socket.on("disconnect", () => {
-      console.log("Client disconnected:", socket.id);
+      // console.log("Client disconnected:", socket.id);
     });
   });
 

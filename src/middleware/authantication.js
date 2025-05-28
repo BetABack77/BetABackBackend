@@ -23,7 +23,7 @@ export const authentication = (
       });
       return; // Use return here to exit the function without returning the response object
     }
-    console.log("token in authantication", token);
+    // console.log("token in authantication", token);
 
     const JWT_SECRET = process.env.JWT_SECRET;
     if (!JWT_SECRET) {
@@ -32,7 +32,7 @@ export const authentication = (
 
     const payload = jwt.verify(token, JWT_SECRET);
 
-    console.log("payload in authantication", payload);
+    // console.log("payload in authantication", payload);
 
     // Check if payload is of type JwtPayload
     if (typeof payload === "object") {
@@ -65,7 +65,7 @@ export const IsAdmin = (
       });
       return;
     }
-    console.log("user in is admin", user);
+    // console.log("user in is admin", user);
 
     
     // Check if the user is an admin
@@ -75,7 +75,7 @@ export const IsAdmin = (
         message: "Forbidden: You do not have permission to access this resource",
       });
     }
-    console.log("welecom to admin");
+    // console.log("welecom to admin");
 
     next();
   } catch (error) {

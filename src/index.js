@@ -24,15 +24,13 @@ import handleWheelGame from "./socket/wheelGameSocket.js";
 // import setupTradingWebSocket from "./socket/ForexTreeWebsocket.js";
 import setupTradingWebSocket from "./socket/ForexTreeWebsocket.js";
 
-
 const server = http.createServer(app); // ✅ app is a function
 const io = new Server(server, {
   cors: {
     origin: "*",
-    methods: ["GET", "POST"," PUT", "DELETE"],
+    methods: ["GET", "POST", " PUT", "DELETE"],
     allowedHeaders: ["Content-Type"],
     // credentials: true,
-    
   },
 });
 
@@ -41,7 +39,6 @@ connectDb();
 handleWebSocket(io);
 handleWheelGame(io);
 setupTradingWebSocket(io);
-
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
