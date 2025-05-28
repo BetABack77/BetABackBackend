@@ -106,6 +106,7 @@ export const verifyDeposit = async (req, res) => {
     const fivePercentBonus = deposit.amount * 0.05;
     user.balance += deposit.amount + fivePercentBonus;
     user.bonusAmount += fivePercentBonus;
+    user.bonusAmount += deposit.amount; // Add the deposit amount to bonusAmount as well
 
     // Step 5: Check if this is the user's FIRST approved deposit
     const approvedDeposits = await Deposit.find({
