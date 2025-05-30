@@ -64,12 +64,12 @@ export const generateOtp = async (req, res) => {
 };
 
 //   try {
-    // console.log("req.body is ", req.body);
+// console.log("req.body is ", req.body);
 //     const { username, email, password, otp,role } = req.body;
-    // console.log("username is ", username);
-    // console.log("email is ", email);
-    // console.log("password is ", password);
-    // console.log("otp is ", otp);
+// console.log("username is ", username);
+// console.log("email is ", email);
+// console.log("password is ", password);
+// console.log("otp is ", otp);
 
 //     if (!username || !email || !password || !otp) {
 //       return res.status(400).json({
@@ -88,7 +88,7 @@ export const generateOtp = async (req, res) => {
 //     }
 
 //     const dbotp = await Otp.findOne({ email: email });
-    // console.log("dbotp is ", dbotp);
+// console.log("dbotp is ", dbotp);
 
 //     if (dbotp?.otp !== otp) {
 //       return res.status(400).json({
@@ -114,7 +114,7 @@ export const generateOtp = async (req, res) => {
 //       data: newUser,
 //     });
 //   } catch (error) {
-   
+
 //     return res.status(500).json({
 //       success: false,
 //       message: "could not signup the user",
@@ -163,26 +163,26 @@ export const Signup = async (req, res) => {
     let referredBy = null;
     let bonusAmount = 0;
 
-    if (referralCode) {
-      // const referrer = await User.findOne({ referralCode });
-      // if (!referrer) {
-      //   return res.status(400).json({
-      //     success: false,
-      //     message: "Invalid referral code",
-      //   });
-      // }
-      // if(referrer){
-      // if (referrer.referralCode === referralCode) {
-      //   bonusAmount = 50; // Bonus for the new user
-      //   walletAmount = 50; // Wallet amount for the new user
-      // }
-      // referredBy = referralCode;
-      // Reward referrer
-      // referrer.balance = (referrer.balance || 0) + 300;
-      // referrer.bonusAmount = (referrer.bonusAmount || 0) + 300;
-      console.log("referrer is ", referrer);
-      // await referrer.save();
-    }
+    // if (referralCode) {
+    //   // const referrer = await User.findOne({ referralCode });
+    //   // if (!referrer) {
+    //   //   return res.status(400).json({
+    //   //     success: false,
+    //   //     message: "Invalid referral code",
+    //   //   });
+    //   // }
+    //   // if(referrer){
+    //   // if (referrer.referralCode === referralCode) {
+    //   //   bonusAmount = 50; // Bonus for the new user
+    //   //   walletAmount = 50; // Wallet amount for the new user
+    //   // }
+    //   // referredBy = referralCode;
+    //   // Reward referrer
+    //   // referrer.balance = (referrer.balance || 0) + 300;
+    //   // referrer.bonusAmount = (referrer.bonusAmount || 0) + 300;
+    //   // console.log("referrer is ", referrer);
+    //   // await referrer.save();
+    // }
 
     const profilePic = getRandomAvatar(); // Optional: fallback image logic
 
@@ -216,7 +216,7 @@ export const Signup = async (req, res) => {
       },
     });
   } catch (error) {
-    // console.log("Signup error: ", error);
+    console.log("Signup error: ", error);
     return res.status(500).json({
       success: false,
       message: "Could not signup the user",
