@@ -60,6 +60,11 @@ app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
+app.get('/api/v1/ping', (req, res) => {
+  res.send("Backend awake!");
+});
+
+
 // Health check route
 app.get("/health", (req, res) => {
   res.status(200).send("OK");
