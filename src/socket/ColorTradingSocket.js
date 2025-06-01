@@ -76,14 +76,23 @@ export default function setupColorGameWebSocket(io) {
     //   currentRound.result = "green";
     // }
 
-    // Determine result (30% blue, 35% red, 35% green)
+    // const random = Math.random();
+
+    // if (random < 0.1) {
+    //   currentRound.result = "blue"; // 10%
+    // } else if (random < 0.45) {
+    //   currentRound.result = "green"; // 35% (10% to 45%)
+    // } else {
+    //   currentRound.result = "red"; // 55% (rest)
+    // }
+
     const random = Math.random();
-    if (random < 0.3) {
-      currentRound.result = "blue";
-    } else if (random < 0.65) {
-      currentRound.result = "red";
+
+    if (random < 0.1) {
+      currentRound.result = "blue"; // 10%
     } else {
-      currentRound.result = "green";
+      // From 10% to 100% → randomly choose green or red
+      currentRound.result = Math.random() < 0.5 ? "green" : "red"; // 45% each
     }
 
     // Process all pending bets
