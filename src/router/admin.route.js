@@ -7,9 +7,13 @@ import {
   getAllDepositHistory,
   getAllPendingDeposits,
   getAllPendingWithdraws,
+  getAllUsers,
   getAllWithdrawHistory,
+  getDashboardStats,
+  getUserDetails,
   rejectDeposit,
   rejectWithdraw,
+  searchUsers,
   updateDepositStatus,
   verfyWithdraw,
   verifyDeposit,
@@ -19,7 +23,6 @@ const adminRoute = Router();
 adminRoute.get("/", (req, res) => {
   res.send("Hello from admin route");
 });
-
 
 adminRoute.get(
   "/getAllWithdrawHistory",
@@ -67,10 +70,18 @@ adminRoute.patch(
   updateDepositStatus
 );
 
-
-
 adminRoute.post("/reject-withdraw", authentication, IsAdmin, rejectWithdraw);
 
 adminRoute.post("/reject-deposit", authentication, IsAdmin, rejectDeposit);
+
+adminRoute.get(
+  "/getDashboardStats",
+  authentication,
+  IsAdmin,
+  getDashboardStats
+);
+adminRoute.get("/getAllUsers", authentication, IsAdmin, getAllUsers);
+adminRoute.get("/searchUsers", authentication, IsAdmin, searchUsers);
+adminRoute.get("/getUserDetails/:userId", authentication, IsAdmin, getUserDetails);
 
 export default adminRoute;

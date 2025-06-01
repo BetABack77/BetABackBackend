@@ -4,6 +4,7 @@ import { WithdrawHistory } from "../model/withdraw.model.js";
 
 import { User } from "../model/User.model.js";
 import { BankDetail } from "../model/bank_detail.model.js";
+import { UserBetHistory } from "../model/UserBetHistory.model.js";
 
 export const verifyDeposit = async (req, res) => {
   try {
@@ -88,7 +89,7 @@ export const verifyDeposit = async (req, res) => {
 export const getAllPendingDeposits = async (req, res) => {
   try {
     const pendingDeposits = await Deposit.find({ status: "PENDING" })
-      .populate("user", "username email") // Populate user info (optional)
+      .populate("user", "username email profilePic") // Populate user info (optional)
       .sort({ createdAt: -1 }); // Newest first
 
     res.status(200).json({
@@ -123,7 +124,7 @@ export const updateDepositStatus = async (req, res) => {
       depositId,
       { status },
       { new: true }
-    ).populate("user", "username email"); // Optional: populate user info
+    ).populate("user", "username email profilePic"); // Optional: populate user info
 
     if (!updatedDeposit) {
       return res.status(404).json({
@@ -266,7 +267,7 @@ export const rejectWithdraw = async (req, res) => {
 export const getAllWithdrawHistory = async (req, res) => {
   try {
     const withdrawHistory = await WithdrawHistory.find()
-      .populate("user", "username email")
+      .populate("user", "username email profilePic")
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -286,7 +287,7 @@ export const getAllWithdrawHistory = async (req, res) => {
 export const getAllDepositHistory = async (req, res) => {
   try {
     const depositHistory = await Deposit.find()
-      .populate("user", "username email")
+      .populate("user", "username email profilePic")
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -306,7 +307,7 @@ export const getAllDepositHistory = async (req, res) => {
 export const getAllApprovedDeposits = async (req, res) => {
   try {
     const approvedDeposits = await Deposit.find({ status: "APPROVED" })
-      .populate("user", "username email") // Populate user info (optional)
+      .populate("user", "username email profilePic") // Populate user info (optional)
       .sort({ createdAt: -1 }); // Newest first
 
     res.status(200).json({
@@ -383,5 +384,186 @@ export const rejectDeposit = async (req, res) => {
   } catch (error) {
     console.error("Reject deposit error:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+// Get dashboard statistics
+export const getDashboardStats = async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments();
+    const activeUsers = await User.countDocuments({ isActive: true });
+
+    const totalDeposits = await Deposit.aggregate([
+      { $match: { status: "APPROVED" } },
+      { $group: { _id: null, total: { $sum: "$amount" } } },
+    ]);
+
+    const totalWithdrawals = await WithdrawHistory.aggregate([
+      { $match: { status: "APPROVED" } },
+      { $group: { _id: null, total: { $sum: "$amount" } } },
+    ]);
+
+    const pendingDepositsCount = await Deposit.countDocuments({
+      status: "PENDING",
+    });
+    const pendingWithdrawalsCount = await WithdrawHistory.countDocuments({
+      status: "PENDING",
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalUsers,
+        activeUsers,
+        totalDeposits: totalDeposits[0]?.total || 0,
+        totalWithdrawals: totalWithdrawals[0]?.total || 0,
+        pendingDepositsCount,
+        pendingWithdrawalsCount,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching dashboard stats:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch dashboard stats",
+      error: error.message,
+    });
+  }
+};
+
+// Get all users
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select("-password").sort({ createdAt: -1 });
+    res.status(200).json({
+      success: true,
+      data: users,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch users",
+      error: error.message,
+    });
+  }
+};
+
+// // Search users
+// export const searchUsers = async (req, res) => {
+//   try {
+//     const { query } = req.query;
+
+//     if (!query) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Search query is required"
+//       });
+//     }
+
+//     const users = await User.find({
+//       $or: [
+//         { username: { $regex: query, $options: 'i' } },
+//         { email: { $regex: query, $options: 'i' } },
+//         { phoneNumber: { $regex: query, $options: 'i' } },
+//         { _id: query }
+//       ]
+//     }).select('-password');
+
+//     res.status(200).json({
+//       success: true,
+//       data: users
+//     });
+//   } catch (error) {
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to search users",
+//       error: error.message
+//     });
+//   }
+// };
+
+import mongoose from "mongoose"; // Make sure this is imported
+
+export const searchUsers = async (req, res) => {
+  try {
+    const { query } = req.query;
+
+    if (!query) {
+      return res.status(400).json({
+        success: false,
+        message: "Search query is required",
+      });
+    }
+
+    const conditions = [
+      { username: { $regex: query, $options: "i" } },
+      { email: { $regex: query, $options: "i" } },
+      { phoneNumber: { $regex: query, $options: "i" } },
+    ];
+
+    // Add _id search only if query is a valid ObjectId
+    if (mongoose.Types.ObjectId.isValid(query)) {
+      conditions.push({ _id: query });
+    }
+
+    const users = await User.find({
+      $or: conditions,
+    }).select("-password");
+
+    res.status(200).json({
+      success: true,
+      data: users,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to search users",
+      error: error.message,
+    });
+  }
+};
+
+// Get user details with full history
+export const getUserDetails = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findById(userId).select("-password");
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Get all related data
+    const [deposits, withdrawals, gameHistory, bankDetails] = await Promise.all(
+      [
+        Deposit.find({ user: userId }).sort({ createdAt: -1 }),
+        WithdrawHistory.find({ user: userId }).sort({ createdAt: -1 }),
+        UserBetHistory.find({ user: userId }).sort({ createdAt: -1 }),
+        BankDetail.find({ user: userId }),
+      ]
+    );
+
+    console.log("games History", gameHistory);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        user,
+        deposits,
+        withdrawals,
+        gameHistory,
+        bankDetails: bankDetails[0] || null,
+      },
+    });
+  } catch (error) {
+    console.log("erro is in userDetail", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch user details",
+      error: error.message,
+    });
   }
 };

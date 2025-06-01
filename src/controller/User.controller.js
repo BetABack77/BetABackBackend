@@ -105,14 +105,8 @@ export const getUserDeposits = async (req, res) => {
 export const withdrawMoney = async (req, res) => {
   try {
     const { amount, transactionId } = req.body;
-    // const PaymentScreenShot = req.files?.image;
-    const userId = req.user.id;
 
-    console.log("PaymentScreenShot", PaymentScreenShot);
-    // console.log("amount", amount);
-    console.log("transactionId", transactionId);
-    // console.log("userId", userId);
-    // ✅ Validate required fields
+    const userId = req.user.id;
 
     if (!amount) {
       return res.status(400).json({ message: "All fields are required" });
@@ -128,8 +122,7 @@ export const withdrawMoney = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    // ✅ Check if user has sufficient balance
-    // console.log("user.balance", user.balance);
+    
 
     if (user.balance < amount) {
       return res.status(400).json({ message: "Insufficient balance" });
@@ -139,21 +132,7 @@ export const withdrawMoney = async (req, res) => {
     user.balance -= amount;
     await user.save();
 
-    // const uploadedImage = await uploadInCloudinary({
-    //   data: PaymentScreenShot.tempFilePath,
-    //   folder: "Withdraw_payment_screenshots",
-    //   isUpload: true,
-    // });
-
-    console.log("uploadedImage", uploadedImage);
-
-    // if (!uploadedImage) {
-    //   return res.status(500).json({ message: "Failed to upload image" });
-    // }
-    // // ✅ Save the image URL to the database
-    // const imageUrl = uploadedImage.secure_url; // Get the URL from the upload response
-    console.log("imageUrl", imageUrl);
-
+   
     // ✅ Create new withdraw document
     const newWithdraw = new WithdrawHistory({
       amount,
@@ -178,7 +157,8 @@ export const withdrawMoney = async (req, res) => {
       data: savedWithdraw,
     });
   } catch (error) {
-    // console.log("Withdraw Error:", error);
+
+    console.log("Withdraw Error:", error);
     res.status(500).json({
       success: false,
       message: "Internal server error",
