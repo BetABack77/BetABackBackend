@@ -66,6 +66,16 @@ export default function setupColorGameWebSocket(io) {
   const endCurrentRound = async () => {
     currentRound.endedAt = new Date();
 
+    // // Determine result (30% blue, 35% red, 35% green)
+    // const random = Math.random();
+    // if (random < 0.3) {
+    //   currentRound.result = "blue";
+    // } else if (random < 0.65) {
+    //   currentRound.result = "red";
+    // } else {
+    //   currentRound.result = "green";
+    // }
+
     // Determine result (30% blue, 35% red, 35% green)
     const random = Math.random();
     if (random < 0.3) {
