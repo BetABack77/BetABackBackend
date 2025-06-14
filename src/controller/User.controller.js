@@ -122,7 +122,6 @@ export const withdrawMoney = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    
 
     if (user.balance < amount) {
       return res.status(400).json({ message: "Insufficient balance" });
@@ -132,7 +131,6 @@ export const withdrawMoney = async (req, res) => {
     user.balance -= amount;
     await user.save();
 
-   
     // ✅ Create new withdraw document
     const newWithdraw = new WithdrawHistory({
       amount,
@@ -157,7 +155,6 @@ export const withdrawMoney = async (req, res) => {
       data: savedWithdraw,
     });
   } catch (error) {
-
     console.log("Withdraw Error:", error);
     res.status(500).json({
       success: false,
@@ -366,7 +363,6 @@ export const getUserBetHistoryHeadTail = async (req, res) => {
   }
 };
 
-
 // controllers/betHistory.controller.js
 
 export const getUserBetHistoryByGameType = async (req, res) => {
@@ -374,12 +370,12 @@ export const getUserBetHistoryByGameType = async (req, res) => {
     const userId = req.user.id;
     const { gameType } = req.params; // or req.query if you prefer query params
 
-    const history = await UserBetHistory.find({ 
+    const history = await UserBetHistory.find({
       userId: userId,
-      gameType: gameType 
+      gameType: gameType,
     })
-    .sort({ createdAt: -1 })
-    .limit(20);
+      .sort({ createdAt: -1 })
+      .limit(20);
 
     res.json({
       success: true,
@@ -389,9 +385,9 @@ export const getUserBetHistoryByGameType = async (req, res) => {
     });
   } catch (error) {
     // console.log("Error fetching history:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      error: "Failed to fetch history" 
+      error: "Failed to fetch history",
     });
   }
 };

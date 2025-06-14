@@ -135,7 +135,7 @@ export const Signup = async (req, res) => {
       console.log
       ("phone is ", phone);
 
-    if (!username || !email || !password || !otp || !dateOfBirth || !phone) {
+    if (!username || !email || !password || !otp  || !phone) {
       return res.status(400).json({
         success: false,
         message: "All fields are required",
@@ -197,7 +197,7 @@ export const Signup = async (req, res) => {
       bonusPlayedAmount: 0,
       referredBy: referredBy,
       referralCode: generateReferralCode(),
-      DateOfBirth: dateOfBirth,
+      // DateOfBirth: dateOfBirth,
       phoneNumber:phone,
       profilePic:
         profilePic ||
